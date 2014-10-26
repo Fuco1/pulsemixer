@@ -1,0 +1,12 @@
+/src/Pulse/Internal/*.chi
+/src/Pulse/Internal/*.chs.h
+/src/Pulse/Internal/*.h
+/src/Pulse/Internal/Context.hs
+/src/Pulse/Internal/Introspect.hs
+/src/Pulse/Internal/MainLoopApi.hs
+/src/Pulse/Internal/Operation.hs
+/src/Pulse/Internal/PropList.hs
+/src/Pulse/Internal/ThreadedMainLoop.hs
+/src/Pulse/Internal/Volume.hs
+/src/Pulse/Internal/Def.hs
+/src/Pulse_stub.h
