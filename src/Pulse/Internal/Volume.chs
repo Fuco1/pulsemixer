@@ -28,12 +28,15 @@ instance Storable RawCVolume where
     alignment _ = {#alignof pa_cvolume #}
     peek p = do
         channelNum <- liftM cIntConv ({#get pa_cvolume->channels #} p)
-        rawArrayHead <- ({#get pa_cvolume->values #} p)
-        channelVolumes <- return . map cIntConv =<< peekArray channelNum rawArrayHead
+        -- TODO: alignof is a HACK!
+        let rawArrayHead = (p `plusPtr` {#alignof pa_cvolume #}) :: Ptr CUInt
+        channelVolumes <- map cIntConv `liftM` peekArray channelNum rawArrayHead
         return $ CVolume channelVolumes p
     poke p (CVolume vol raw) = do
-        {#set pa_cvolume.channels #} p undefined
-        {#set pa_cvolume.values #} p undefined
+        {#set pa_cvolume.channels #} p (cIntConv (length vol))
+        -- TODO: alignof is a HACK!
+        let rawArrayHead = (p `plusPtr` {#alignof pa_cvolume #}) :: Ptr CUInt
+        pokeArray rawArrayHead (map cIntConv vol)
 
 {#pointer *pa_cvolume as RawCVolumePtr -> RawCVolume #}
 
