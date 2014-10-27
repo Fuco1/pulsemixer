@@ -4,7 +4,10 @@
 
 {#context prefix = "pa"#}
 
-module Pulse.Internal.Introspect where
+module Pulse.Internal.Introspect
+       ( module Pulse.Internal.Introspect
+       , RawCVolume(..)
+       ) where
 
 import Foreign.C
 import Foreign.Ptr
@@ -20,7 +23,9 @@ import Pulse.Internal.C2HS
 #include <pulse/introspect.h>
 
 data RawSinkInputInfo = RawSinkInputInfo
-    { sinkInputName'RawSinkInputInfo :: Maybe String
+    { index'RawSinkInputInfo :: Int
+    , sinkInputName'RawSinkInputInfo :: Maybe String
+    , volume'RawSinkInputInfo :: RawCVolume
     , driverName'RawSinkInputInfo :: Maybe String
     , proplist'RawSinkInputInfo :: RawPropListPtr
     }
@@ -29,7 +34,9 @@ instance Storable RawSinkInputInfo where
     sizeOf _ = {#sizeof pa_sink_input_info #}
     alignment _ = {#alignof pa_sink_input_info #}
     peek p = RawSinkInputInfo
-        <$> (peekNullableUTF8CString =<< ({#get pa_sink_input_info->name #} p))
+        <$> cIntConv `liftM` ({#get pa_sink_input_info->index #} p)
+        <*> (peekNullableUTF8CString =<< ({#get pa_sink_input_info->name #} p))
+        <*> peek ((p `plusPtr` 172) :: Ptr RawCVolume)
         <*> (peekNullableUTF8CString =<< ({#get pa_sink_input_info->driver #} p))
         <*> ({#get pa_sink_input_info->proplist #} p)
     poke p x = return ()
