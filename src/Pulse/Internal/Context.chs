@@ -21,6 +21,7 @@ type RawContextNotifyCallback a = RawContextPtr -> RawUserData a -> IO ()
 type RawContextSuccessCallback a = RawContextPtr -> CInt -> RawUserData a -> IO ()
 
 foreign import ccall "wrapper" wrapRawContextNotifyCallback :: RawContextNotifyCallback a  -> IO (FunPtr (RawContextNotifyCallback a))
+foreign import ccall "wrapper" wrapRawContextSuccessCallback :: RawContextSuccessCallback a  -> IO (FunPtr (RawContextSuccessCallback a))
 
 data RawContext
 {#pointer *pa_context as RawContextPtr -> RawContext #}
