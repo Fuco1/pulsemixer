@@ -55,6 +55,19 @@ sinkInputCb ctx info eol userdata = do
       Just appName <- proplistGets proplist "application.name"
       putStrLn $ "Application name: " ++ appName ++ "\nVolume: " ++ show volumes
 
+sinkInputSetVolumeCb :: SinkInputInfoCallback (TVar State)
+sinkInputSetVolumeCb ctx info eol userdata = do
+  unless eol $ do
+    RawSinkInputInfo { index'RawSinkInputInfo = index
+                     , volume'RawSinkInputInfo = (CVolume volumes p) } <- peek info
+    let vol = CVolume [10000,10000] p
+    alloca $ \ptr -> do
+      fptr <- wrapRawContextSuccessCallback $ \_ _ _ -> return ()
+      poke ptr vol
+      contextSetSinkInputVolume ctx index ptr fptr Nothing
+      return ()
+
+
 notifyCB :: RawContextNotifyCallback a
 notifyCB ctx _ = show <$> contextGetState ctx >>= putStrLn
 
@@ -69,6 +82,7 @@ run = do
       num <- liftIO $ atomically $ nSinks `liftM` readTVar dat
       liftIO $ putStrLn $ "Number of calls to info: " ++ show num
       run
+    "set" -> getSinkInputInfoList sinkInputSetVolumeCb >> run
     _ -> run
 
 main :: IO ()
