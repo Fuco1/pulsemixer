@@ -49,10 +49,11 @@ sinkInputCb ctx info eol userdata = do
     then putStrLn "Done"
     else do
       RawSinkInputInfo { sinkInputName'RawSinkInputInfo = Just name
+                       , volume'RawSinkInputInfo = (CVolume volumes _)
                        , proplist'RawSinkInputInfo = proplist } <- peek info
       putStrLn $ "Name of device: " ++ name
       Just appName <- proplistGets proplist "application.name"
-      putStrLn $ "Application name: " ++ appName
+      putStrLn $ "Application name: " ++ appName ++ "\nVolume: " ++ show volumes
 
 notifyCB :: RawContextNotifyCallback a
 notifyCB ctx _ = show <$> contextGetState ctx >>= putStrLn
