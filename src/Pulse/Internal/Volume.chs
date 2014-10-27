@@ -19,7 +19,7 @@ import Pulse.Internal.C2HS
 type Volume = Integer
 
 data RawCVolume = CVolume
-    { channeVolumes :: [Volume]
+    { channelVolumes :: [Volume]
     , volRaw :: RawCVolumePtr
     }
 
