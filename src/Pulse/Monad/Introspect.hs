@@ -42,13 +42,10 @@ getSinkInputInfoList cb = do
     contextGetSinkInputInfoList ctx cbWrapped udata
     return ()
 
-sinkInputCbSync :: SinkInputInfoCallback (TVar ([SinkInput], MVar Int))
-sinkInputCbSync ctx info eol userdata = do
-  let Just tvar = userdata
+sinkInputCbSync :: MVar () -> TVar [SinkInput] -> SinkInputInfoCallback ()
+sinkInputCbSync mvar tvar ctx info eol userdata = do
   if eol
-    then do
-         mvar <- snd `liftM` (atomically $ readTVar tvar)
-         putMVar mvar 1
+    then putMVar mvar ()
     else do
       RawSinkInputInfo { index'RawSinkInputInfo = index
                        , sinkInputName'RawSinkInputInfo = Just name
@@ -56,17 +53,16 @@ sinkInputCbSync ctx info eol userdata = do
                        } <- peek info
       pl <- propListFromRaw rawPL
       let new = SinkInput index name pl
-      atomically $ modifyTVar tvar (\(xs, m) -> (new : xs, m))
+      atomically $ modifyTVar tvar (new :)
 
 getSinkInputInfoListSync :: Pulse [SinkInput]
 getSinkInputInfoListSync = do
   ctx <- getContext
   liftIO $ do
-    mvar <- (newEmptyMVar :: IO (MVar Int))
-    tvar <- newTVarIO ([], mvar)
-    udata <- Just `liftM` newStablePtr tvar
-    cbWrapped <- wrapSinkInputInfoCallback sinkInputCbSync
-    forkIO (void $ contextGetSinkInputInfoList ctx cbWrapped udata)
+    mvar <- (newEmptyMVar :: IO (MVar ()))
+    tvar <- newTVarIO []
+    cbWrapped <- wrapSinkInputInfoCallback (sinkInputCbSync mvar tvar)
+    contextGetSinkInputInfoList ctx cbWrapped Nothing
     status <- readMVar mvar
     sinks <- atomically $ readTVar tvar
-    return $ fst sinks
+    return sinks
