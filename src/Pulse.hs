@@ -60,7 +60,7 @@ sinkInputSetVolumeCb ctx info eol userdata = do
   unless eol $ do
     RawSinkInputInfo { index'RawSinkInputInfo = index
                      , volume'RawSinkInputInfo = (CVolume volumes p) } <- peek info
-    let vol = CVolume [10000,10000] p
+    let vol = CVolume [10000,10000] p  --TODO: make this settable.
     alloca $ \ptr -> do
       fptr <- wrapRawContextSuccessCallback $ \_ _ _ -> return ()
       poke ptr vol
@@ -77,6 +77,7 @@ run = do
   case cmd of
     "quit" -> liftIO $ putStrLn "Quitting"
     "info" -> getSinkInputInfoList sinkInputCb >> run
+    "sinfo" -> getSinkInputInfoListSync >>= liftIO . putStrLn . show >> run
     "m" -> do
       dat <- getData
       num <- liftIO $ atomically $ nSinks `liftM` readTVar dat

@@ -1,14 +1,22 @@
 module Pulse.Monad.Introspect
        ( SinkInputInfoCallback
        , getSinkInputInfoList
+       , getSinkInputInfoListSync
        ) where
 
-import Control.Monad (liftM)
+import Control.Concurrent
+import Control.Concurrent.MVar
+import Control.Concurrent.STM
+import Control.Concurrent.STM.TVar
+
+import Control.Monad (liftM, void)
 import Control.Monad.IO.Class (liftIO)
 
 import Foreign.StablePtr (newStablePtr, deRefStablePtr)
 import Foreign.Ptr (FunPtr(..))
+import Foreign.Storable
 
+import Pulse.Monad.Data
 import Pulse.Monad.Monad
 
 import Pulse.Internal.C2HS (castPtrToMaybeStable)
@@ -33,3 +41,32 @@ getSinkInputInfoList cb = do
     cbWrapped <- wrapSinkInputInfoCallback cb
     contextGetSinkInputInfoList ctx cbWrapped udata
     return ()
+
+sinkInputCbSync :: SinkInputInfoCallback (TVar ([SinkInput], MVar Int))
+sinkInputCbSync ctx info eol userdata = do
+  let Just tvar = userdata
+  if eol
+    then do
+         mvar <- snd `liftM` (atomically $ readTVar tvar)
+         putMVar mvar 1
+    else do
+      RawSinkInputInfo { index'RawSinkInputInfo = index
+                       , sinkInputName'RawSinkInputInfo = Just name
+                       , proplist'RawSinkInputInfo = rawPL
+                       } <- peek info
+      pl <- propListFromRaw rawPL
+      let new = SinkInput index name pl
+      atomically $ modifyTVar tvar (\(xs, m) -> (new : xs, m))
+
+getSinkInputInfoListSync :: Pulse [SinkInput]
+getSinkInputInfoListSync = do
+  ctx <- getContext
+  liftIO $ do
+    mvar <- (newEmptyMVar :: IO (MVar Int))
+    tvar <- newTVarIO ([], mvar)
+    udata <- Just `liftM` newStablePtr tvar
+    cbWrapped <- wrapSinkInputInfoCallback sinkInputCbSync
+    forkIO (void $ contextGetSinkInputInfoList ctx cbWrapped udata)
+    status <- readMVar mvar
+    sinks <- atomically $ readTVar tvar
+    return $ fst sinks
