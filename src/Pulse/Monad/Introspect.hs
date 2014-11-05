@@ -1,8 +1,12 @@
+{-# Language TypeSynonymInstances, FlexibleInstances #-}
+
 module Pulse.Monad.Introspect
        ( SinkInputInfoCallback
        , getSinkInputInfoList
        , getSinkInputInfoListSync
        ) where
+
+import Foreign.C
 
 import Control.Concurrent
 import Control.Concurrent.MVar
@@ -19,50 +23,69 @@ import Foreign.Storable
 import Pulse.Monad.Data
 import Pulse.Monad.Monad
 
-import Pulse.Internal.C2HS (castPtrToMaybeStable)
+import Pulse.Internal.C2HS (castPtrToMaybeStable, RawUserData)
 import Pulse.Internal.Context
 import Pulse.Internal.Introspect
 
-type SinkInputInfoCallback a = RawContextPtr -> RawSinkInputInfoPtr -> Bool -> Maybe a -> IO ()
+-- TODO: make better names for Callbacks, actions, TVar a -> i -> IO ()
+-- things etc... right now the functions are quite confusing
+type InfoCallback i u = RawContextPtr -> i -> Bool -> Maybe u -> IO ()
+type RawInfoCallback i u = RawContextPtr -> i -> CInt -> RawUserData u -> IO ()
+type RawInfoCallbackPtr i u = FunPtr (RawContextPtr -> i -> CInt -> RawUserData u -> IO ())
 
-wrapSinkInputInfoCallback :: SinkInputInfoCallback a -> IO (FunPtr (RawSinkInputInfoCallback a))
-wrapSinkInputInfoCallback cb = wrapRawSinkInputInfoCallback $ \ctx info eol userdata -> do
+type SinkInputInfoCallback a = InfoCallback RawSinkInputInfoPtr a
+
+class CallbackInfo i where
+  wrapRaw :: RawInfoCallback i u -> IO (RawInfoCallbackPtr i u)
+
+  wrap :: InfoCallback i u -> IO (RawInfoCallbackPtr i u)
+  wrap = wrapInfoCallback
+
+instance CallbackInfo RawSinkInputInfoPtr where
+  wrapRaw = wrapRawSinkInputInfoCallback
+
+wrapInfoCallback :: CallbackInfo i => InfoCallback i u -> IO (RawInfoCallbackPtr i u)
+wrapInfoCallback cb = wrapRaw $ \ctx info eol userdata -> do
   d <- case castPtrToMaybeStable userdata of
         Just ptr -> Just `liftM` deRefStablePtr ptr
         Nothing -> return Nothing
   cb ctx info (eol > 0) d
 
+synchronizeCallback :: CallbackInfo i => MVar () -> TVar a -> (TVar a -> i -> IO ()) -> IO (RawInfoCallbackPtr i u)
+synchronizeCallback mvar tvar action = wrap $ \ctx info eol userdata -> do
+  if eol
+    then putMVar mvar ()
+    else action tvar info
+
+callSynchronously :: CallbackInfo i => a -> (TVar a -> i -> IO ()) -> (RawInfoCallbackPtr i u -> IO ()) -> IO a
+callSynchronously zero cb action = do
+  mvar <- newEmptyMVar
+  tvar <- newTVarIO zero
+  synchronizeCallback mvar tvar cb >>= action
+  takeMVar mvar
+  atomically $ readTVar tvar
+
+processSinkInput :: TVar [SinkInput] -> RawSinkInputInfoPtr -> IO ()
+processSinkInput tvar info = do
+  RawSinkInputInfo { index'RawSinkInputInfo = index
+                   , sinkInputName'RawSinkInputInfo = Just name
+                   , proplist'RawSinkInputInfo = rawPL
+                   } <- peek info
+  pl <- propListFromRaw rawPL
+  atomically $ modifyTVar tvar ((SinkInput index name pl) :)
+
+getSinkInputInfoListSync :: Pulse [SinkInput]
+getSinkInputInfoListSync = do
+  ctx <- getContext
+  liftIO $ callSynchronously [] processSinkInput (\cb -> void $ contextGetSinkInputInfoList ctx cb Nothing)
+
+-- async api
 getSinkInputInfoList :: SinkInputInfoCallback a -> Pulse ()
 getSinkInputInfoList cb = do
   ctx <- getContext
   dat <- getData
   liftIO $ do
     udata <- Just `liftM` newStablePtr dat
-    cbWrapped <- wrapSinkInputInfoCallback cb
+    cbWrapped <- wrap cb
     contextGetSinkInputInfoList ctx cbWrapped udata
     return ()
-
-sinkInputCbSync :: MVar () -> TVar [SinkInput] -> SinkInputInfoCallback ()
-sinkInputCbSync mvar tvar ctx info eol userdata = do
-  if eol
-    then putMVar mvar ()
-    else do
-      RawSinkInputInfo { index'RawSinkInputInfo = index
-                       , sinkInputName'RawSinkInputInfo = Just name
-                       , proplist'RawSinkInputInfo = rawPL
-                       } <- peek info
-      pl <- propListFromRaw rawPL
-      let new = SinkInput index name pl
-      atomically $ modifyTVar tvar (new :)
-
-getSinkInputInfoListSync :: Pulse [SinkInput]
-getSinkInputInfoListSync = do
-  ctx <- getContext
-  liftIO $ do
-    mvar <- (newEmptyMVar :: IO (MVar ()))
-    tvar <- newTVarIO []
-    cbWrapped <- wrapSinkInputInfoCallback (sinkInputCbSync mvar tvar)
-    contextGetSinkInputInfoList ctx cbWrapped Nothing
-    status <- readMVar mvar
-    sinks <- atomically $ readTVar tvar
-    return sinks
