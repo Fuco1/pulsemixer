@@ -22,6 +22,17 @@ import Pulse.Internal.C2HS
 
 #include <pulse/introspect.h>
 
+-- TODO: make better names for Callbacks, actions, TVar a -> i -> IO ()
+-- things etc... right now the functions are quite confusing
+type InfoCallback i u = RawContextPtr -> i -> Bool -> Maybe u -> IO ()
+type RawInfoCallback i u = RawContextPtr -> i -> CInt -> RawUserData u -> IO ()
+type RawInfoCallbackPtr i u = FunPtr (RawContextPtr -> i -> CInt -> RawUserData u -> IO ())
+
+type SinkInputInfoCallback a = InfoCallback RawSinkInputInfoPtr a
+type RawSinkInputInfoCallback a = RawInfoCallback RawSinkInputInfoPtr a
+
+foreign import ccall "wrapper" wrapRawSinkInputInfoCallback :: RawSinkInputInfoCallback a -> IO (FunPtr (RawSinkInputInfoCallback a))
+
 data RawSinkInputInfo = RawSinkInputInfo
     { index'RawSinkInputInfo :: Int
     , sinkInputName'RawSinkInputInfo :: Maybe String
@@ -41,9 +52,6 @@ instance Storable RawSinkInputInfo where
         <*> ({#get pa_sink_input_info->proplist #} p)
     poke p x = return ()
 {#pointer *sink_input_info as RawSinkInputInfoPtr -> RawSinkInputInfo #}
-
-type RawSinkInputInfoCallback a = RawContextPtr -> RawSinkInputInfoPtr -> CInt -> RawUserData a -> IO ()
-foreign import ccall "wrapper" wrapRawSinkInputInfoCallback :: RawSinkInputInfoCallback a -> IO (FunPtr (RawSinkInputInfoCallback a))
 
 {#fun context_get_sink_input_info as ^
     { id `RawContextPtr',

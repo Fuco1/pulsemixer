@@ -27,14 +27,6 @@ import Pulse.Internal.C2HS (castPtrToMaybeStable, RawUserData)
 import Pulse.Internal.Context
 import Pulse.Internal.Introspect
 
--- TODO: make better names for Callbacks, actions, TVar a -> i -> IO ()
--- things etc... right now the functions are quite confusing
-type InfoCallback i u = RawContextPtr -> i -> Bool -> Maybe u -> IO ()
-type RawInfoCallback i u = RawContextPtr -> i -> CInt -> RawUserData u -> IO ()
-type RawInfoCallbackPtr i u = FunPtr (RawContextPtr -> i -> CInt -> RawUserData u -> IO ())
-
-type SinkInputInfoCallback a = InfoCallback RawSinkInputInfoPtr a
-
 class CallbackInfo i where
   wrapRaw :: RawInfoCallback i u -> IO (RawInfoCallbackPtr i u)
 
