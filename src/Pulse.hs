@@ -58,6 +58,10 @@ run = do
       (si:_) <- getSinkInputInfoList
       setSinkInputVolume value si
       run
+    "mute" -> do
+      (si:_) <- getSinkInputInfoList
+      setSinkInputMute Toggle si
+      run
     _ -> run
 
 main :: IO ()

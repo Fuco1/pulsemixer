@@ -1,7 +1,9 @@
 {-# Language TypeSynonymInstances, FlexibleInstances #-}
 
 module Pulse.Monad.Context
-       ( setSinkInputVolume
+       ( MuteCommand(..)
+       , setSinkInputVolume
+       , setSinkInputMute
        ) where
 
 import Foreign.C
@@ -47,3 +49,17 @@ setSinkInputVolume vol (SinkInput { sinkInputIndex = index
   liftIO $ alloca $ \ptr -> do
     poke ptr v
     callSynchronously $ \fptr -> void $ contextSetSinkInputVolume ctx index ptr fptr Nothing
+
+data MuteCommand = Mute | Unmute | Toggle deriving (Eq, Ord, Show)
+
+setSinkInputMute :: MuteCommand -> SinkInput -> Pulse Bool
+setSinkInputMute cmd (SinkInput { sinkInputIndex = index
+                                , sinkInputMute = mute
+                                }) = do
+  ctx <- getContext
+  liftIO $ do
+    callSynchronously $ \fptr ->
+      void $ case cmd of
+              Mute -> contextSetSinkInputMute ctx index 1 fptr Nothing
+              Unmute -> contextSetSinkInputMute ctx index 0 fptr Nothing
+              Toggle -> contextSetSinkInputMute ctx index (if mute == Muted then 0 else 1) fptr Nothing
