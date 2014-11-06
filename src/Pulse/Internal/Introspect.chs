@@ -38,6 +38,7 @@ data RawSinkInputInfo = RawSinkInputInfo
     , sinkInputName'RawSinkInputInfo :: Maybe String
     , volume'RawSinkInputInfo :: RawCVolume
     , driverName'RawSinkInputInfo :: Maybe String
+    , mute'RawSinkInputInfo :: Int
     , proplist'RawSinkInputInfo :: RawPropListPtr
     }
 
@@ -49,6 +50,7 @@ instance Storable RawSinkInputInfo where
         <*> (peekNullableUTF8CString =<< ({#get pa_sink_input_info->name #} p))
         <*> peek ((p `plusPtr` 172) :: Ptr RawCVolume)
         <*> (peekNullableUTF8CString =<< ({#get pa_sink_input_info->driver #} p))
+        <*> cIntConv `liftM` ({#get pa_sink_input_info->mute #} p)
         <*> ({#get pa_sink_input_info->proplist #} p)
     poke p x = return ()
 {#pointer *sink_input_info as RawSinkInputInfoPtr -> RawSinkInputInfo #}

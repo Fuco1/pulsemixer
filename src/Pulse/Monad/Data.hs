@@ -1,6 +1,7 @@
 module Pulse.Monad.Data
        ( Env(..)
        , State(..)
+       , MuteState(..)
        , SinkInput(..)
        , PropList(..)
        , propListFromRaw
@@ -28,10 +29,13 @@ propListFromRaw proplist = do
   return $ M.insert ApplicationName appName .
     id $ M.empty
 
+data MuteState = Muted | Unmuted deriving (Eq, Ord, Show)
+
 data SinkInput = SinkInput
                  { sinkInputIndex :: Int
                  , sinkInputName :: String
                  , sinkInputVolume :: RawCVolume
+                 , sinkInputMute :: MuteState
                  , sinkInputProplist :: PropList
                  } deriving Show
 

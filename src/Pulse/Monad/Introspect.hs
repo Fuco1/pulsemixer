@@ -61,10 +61,16 @@ processSinkInput tvar info = do
   RawSinkInputInfo { index'RawSinkInputInfo = index
                    , sinkInputName'RawSinkInputInfo = Just name
                    , volume'RawSinkInputInfo = volume
+                   , mute'RawSinkInputInfo = mute
                    , proplist'RawSinkInputInfo = rawPL
                    } <- peek info
   pl <- propListFromRaw rawPL
-  atomically $ modifyTVar tvar ((SinkInput index name volume pl) :)
+  atomically $ modifyTVar tvar ((SinkInput
+                                 index
+                                 name
+                                 volume
+                                 (if (mute > 0) then Muted else Unmuted)
+                                 pl) :)
 
 getSinkInputInfoList :: Pulse [SinkInput]
 getSinkInputInfoList = do
