@@ -12,6 +12,8 @@ import Control.Concurrent.MVar
 import Control.Concurrent.STM
 import Control.Concurrent.STM.TVar
 
+import Control.Exception
+
 import Control.Monad (liftM, void)
 import Control.Monad.IO.Class (liftIO)
 
@@ -25,6 +27,8 @@ import Pulse.Monad.Monad
 import Pulse.Internal.C2HS (castPtrToMaybeStable, RawUserData)
 import Pulse.Internal.Context
 import Pulse.Internal.Introspect
+
+import System.Timeout
 
 class CallbackInfo i where
   wrapRaw :: RawInfoCallback i u -> IO (RawInfoCallbackPtr i u)
@@ -43,17 +47,18 @@ wrapInfoCallback cb = wrapRaw $ \ctx info eol userdata -> do
   cb ctx info (eol > 0) d
 
 synchronizeCallback :: CallbackInfo i => MVar () -> TVar a -> (TVar a -> i -> IO ()) -> IO (RawInfoCallbackPtr i u)
-synchronizeCallback mvar tvar action = wrap $ \ctx info eol userdata -> do
-  if eol
-    then putMVar mvar ()
-    else action tvar info
+synchronizeCallback mvar tvar action = flip onException (putMVar mvar ()) $ wrap $ \ctx info eol userdata -> do
+  empty <- isEmptyMVar mvar
+  if empty && not eol
+    then action tvar info
+    else putMVar mvar ()
 
 callSynchronously :: CallbackInfo i => a -> (TVar a -> i -> IO ()) -> (RawInfoCallbackPtr i u -> IO ()) -> IO a
 callSynchronously zero cb action = do
   mvar <- newEmptyMVar
   tvar <- newTVarIO zero
   synchronizeCallback mvar tvar cb >>= action
-  takeMVar mvar
+  timeout 1000000 $ takeMVar mvar
   atomically $ readTVar tvar
 
 processSinkInput :: TVar [SinkInput] -> RawSinkInputInfoPtr -> IO ()

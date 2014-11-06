@@ -29,6 +29,8 @@ import Pulse.Internal.C2HS (castPtrToMaybeStable, RawUserData)
 import Pulse.Internal.Context
 import Pulse.Internal.Introspect
 
+import System.Timeout
+
 synchronizingCallback :: MVar Bool -> IO (FunPtr (RawContextSuccessCallback a))
 synchronizingCallback mvar = wrapRawContextSuccessCallback $ \_ success _ -> putMVar mvar (success > 0)
 
@@ -38,7 +40,10 @@ callSynchronously action = do
   mvar <- newEmptyMVar
   fptr <- synchronizingCallback mvar
   action fptr
-  takeMVar mvar
+  re <- timeout 1000000 $ takeMVar mvar
+  return $ case re of
+    Just x -> x
+    Nothing -> False
 
 setSinkInputVolume :: Integer -> SinkInput -> Pulse Bool
 setSinkInputVolume vol (SinkInput { sinkInputIndex = index
