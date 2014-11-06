@@ -84,6 +84,11 @@ run = do
       liftIO $ putStrLn $ "Number of calls to info: " ++ show num
       run
     "set" -> getSinkInputInfoList sinkInputSetVolumeCb >> run
+    "sset" -> do
+      value <- liftIO $ read `liftM` getLine
+      (si:_) <- getSinkInputInfoListSync
+      setSinkInputVolume value si
+      run
     _ -> run
 
 main :: IO ()
