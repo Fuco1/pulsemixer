@@ -14,10 +14,8 @@ import Control.Concurrent.STM.TVar
 import Control.Monad (liftM, void)
 import Control.Monad.IO.Class (liftIO)
 
--- import Foreign.C
-import Foreign.Safe
--- import Foreign.C.String
 
+import Foreign.Safe hiding (void)
 import Foreign.StablePtr (newStablePtr, deRefStablePtr)
 import Foreign.Ptr (FunPtr(..))
 import Foreign.Storable
@@ -32,6 +30,14 @@ import Pulse.Internal.Introspect
 synchronizingCallback :: MVar Bool -> IO (FunPtr (RawContextSuccessCallback a))
 synchronizingCallback mvar = wrapRawContextSuccessCallback $ \_ success _ -> putMVar mvar (success > 0)
 
+-- ^ This should call a "action" syncrhonously, and return its success status
+callSynchronously :: (FunPtr (RawContextSuccessCallback a) -> IO ()) -> IO Bool
+callSynchronously action = do
+  mvar <- newEmptyMVar
+  fptr <- synchronizingCallback mvar
+  action fptr
+  takeMVar mvar
+
 setSinkInputVolume :: Integer -> SinkInput -> Pulse Bool
 setSinkInputVolume vol (SinkInput { sinkInputIndex = index
                                   , sinkInputVolume = (CVolume _ p)
@@ -39,8 +45,5 @@ setSinkInputVolume vol (SinkInput { sinkInputIndex = index
   ctx <- getContext
   let v = CVolume [vol, vol] p
   liftIO $ alloca $ \ptr -> do
-    mvar <- newEmptyMVar
-    fptr <- synchronizingCallback mvar
     poke ptr v
-    contextSetSinkInputVolume ctx index ptr fptr Nothing
-    takeMVar mvar
+    callSynchronously $ \fptr -> void $ contextSetSinkInputVolume ctx index ptr fptr Nothing
