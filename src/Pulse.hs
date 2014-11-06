@@ -53,6 +53,7 @@ run = do
       liftIO $ putStrLn $ "Number of calls to info: " ++ show num
       run
     "set" -> do
+      liftIO $ putStr "Volume level: "
       value <- liftIO $ read `liftM` getLine
       (si:_) <- getSinkInputInfoList
       setSinkInputVolume value si
