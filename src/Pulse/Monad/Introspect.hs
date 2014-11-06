@@ -61,10 +61,11 @@ processSinkInput :: TVar [SinkInput] -> RawSinkInputInfoPtr -> IO ()
 processSinkInput tvar info = do
   RawSinkInputInfo { index'RawSinkInputInfo = index
                    , sinkInputName'RawSinkInputInfo = Just name
+                   , volume'RawSinkInputInfo = volume
                    , proplist'RawSinkInputInfo = rawPL
                    } <- peek info
   pl <- propListFromRaw rawPL
-  atomically $ modifyTVar tvar ((SinkInput index name pl) :)
+  atomically $ modifyTVar tvar ((SinkInput index name volume pl) :)
 
 getSinkInputInfoListSync :: Pulse [SinkInput]
 getSinkInputInfoListSync = do

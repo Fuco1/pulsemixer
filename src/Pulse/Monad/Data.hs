@@ -31,8 +31,9 @@ propListFromRaw proplist = do
 data SinkInput = SinkInput
                  { sinkInputIndex :: Int
                  , sinkInputName :: String
+                 , sinkInputVolume :: RawCVolume
                  , sinkInputProplist :: PropList
-                 } deriving (Eq, Show)
+                 } deriving Show
 
 data State = State
              { nSinks :: Int
