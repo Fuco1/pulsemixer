@@ -3,7 +3,6 @@
 module Pulse.Monad.Introspect
        ( SinkInputInfoCallback
        , getSinkInputInfoList
-       , getSinkInputInfoListSync
        ) where
 
 import Foreign.C
@@ -67,18 +66,7 @@ processSinkInput tvar info = do
   pl <- propListFromRaw rawPL
   atomically $ modifyTVar tvar ((SinkInput index name volume pl) :)
 
-getSinkInputInfoListSync :: Pulse [SinkInput]
-getSinkInputInfoListSync = do
+getSinkInputInfoList :: Pulse [SinkInput]
+getSinkInputInfoList = do
   ctx <- getContext
   liftIO $ callSynchronously [] processSinkInput (\cb -> void $ contextGetSinkInputInfoList ctx cb Nothing)
-
--- async api
-getSinkInputInfoList :: SinkInputInfoCallback a -> Pulse ()
-getSinkInputInfoList cb = do
-  ctx <- getContext
-  dat <- getData
-  liftIO $ do
-    udata <- Just `liftM` newStablePtr dat
-    cbWrapped <- wrap cb
-    contextGetSinkInputInfoList ctx cbWrapped udata
-    return ()
