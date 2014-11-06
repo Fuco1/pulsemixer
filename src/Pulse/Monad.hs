@@ -7,6 +7,7 @@ module Pulse.Monad
        , runPulseT
        , getData
        , module Pulse.Monad.Introspect
+       , module Pulse.Monad.Context
        ) where
 
 import Control.Concurrent.STM.TVar (TVar(..), newTVarIO, writeTVar)
@@ -19,6 +20,7 @@ import Control.Monad.RWS.Strict (RWST(..), liftIO, evalRWST, ask)
 import Foreign.Ptr
 
 import Pulse.Monad.Connection
+import Pulse.Monad.Context
 import Pulse.Monad.Data
 import Pulse.Monad.Monad
 import Pulse.Monad.Introspect
