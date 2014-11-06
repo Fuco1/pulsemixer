@@ -23,6 +23,10 @@ data RawThreadedMainLoop
 
 {#fun threaded_mainloop_start as ^ {id `RawThreadedMainLoopPtr'} -> `Int' #}
 
+{#fun threaded_mainloop_stop as ^ {id `RawThreadedMainLoopPtr'} -> `()' id #}
+
+{#fun threaded_mainloop_free as ^ {id `RawThreadedMainLoopPtr'} -> `()' id #}
+
 -- Local Variables:
 -- mode: haskell
 -- End:

@@ -21,4 +21,10 @@ newConn = do
   return (Env ctx ml)
 
 freeConn :: Env -> IO ()
-freeConn env = return ()
+freeConn Env { envContext = ctx
+             , envMainThread = ml
+             } = do
+  contextDisconnect ctx
+  contextUnref ctx
+  threadedMainloopStop ml
+  threadedMainloopFree ml

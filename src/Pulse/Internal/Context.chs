@@ -38,6 +38,10 @@ data RawContext
     , id `SpawnApiPtr'
     } -> `Int' #}
 
+{#fun context_disconnect as ^ {id `RawContextPtr'} -> `()' id #}
+
+{#fun context_unref as ^ {id `RawContextPtr'} -> `()' id #}
+
 {#fun context_set_state_callback as ^
     { id `RawContextPtr'
     , id `FunPtr (RawContextNotifyCallback a)'
