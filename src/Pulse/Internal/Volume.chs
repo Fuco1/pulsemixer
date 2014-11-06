@@ -21,7 +21,7 @@ type Volume = Integer
 data RawCVolume = CVolume
     { channelVolumes :: [Volume]
     , volRaw :: RawCVolumePtr
-    }
+    } deriving Show
 
 instance Storable RawCVolume where
     sizeOf _ = {#sizeof pa_cvolume #}
