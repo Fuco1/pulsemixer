@@ -1,6 +1,6 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 
-module Pulse where
+module Main where
 
 import GHC.IO.Encoding (utf8)
 import qualified GHC.Foreign as GHC
