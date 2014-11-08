@@ -6,8 +6,9 @@ module Pulse.Monad
        , runPulse
        , runPulseT
        , getData
-       , module Pulse.Monad.Introspect
        , module Pulse.Monad.Context
+       , module Pulse.Monad.Data
+       , module Pulse.Monad.Introspect
        ) where
 
 import Control.Concurrent.STM.TVar (newTVarIO, writeTVar)
@@ -17,9 +18,10 @@ import Control.Monad.CatchIO (MonadCatchIO, bracket)
 import Control.Monad.RWS.Strict (liftIO, evalRWST, ask)
 
 import Pulse.Monad.Connection (newConn, freeConn)
-import Pulse.Monad.Context
-import Pulse.Monad.Data (State(..))
 import Pulse.Monad.Monad (PulseT(..), Pulse, getData)
+
+import Pulse.Monad.Context
+import Pulse.Monad.Data
 import Pulse.Monad.Introspect
 
 runPulseT :: MonadCatchIO m => PulseT m n -> m n
