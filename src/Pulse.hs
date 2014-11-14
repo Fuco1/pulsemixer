@@ -12,8 +12,6 @@ import Foreign.Ptr
 import Foreign.StablePtr
 import Foreign.Storable
 
-import UI.NCurses
-
 import Control.Applicative
 import Control.Concurrent.MVar
 import Control.Concurrent.STM.TVar (TVar(..), newTVarIO, writeTVar, readTVar, modifyTVar)
