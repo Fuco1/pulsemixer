@@ -31,7 +31,11 @@ type RawInfoCallbackPtr i u = FunPtr (RawContextPtr -> i -> CInt -> RawUserData 
 type SinkInputInfoCallback a = InfoCallback RawSinkInputInfoPtr a
 type RawSinkInputInfoCallback a = RawInfoCallback RawSinkInputInfoPtr a
 
+type SinkInfoCallback a = InfoCallback RawSinkInfoPtr a
+type RawSinkInfoCallback a = RawInfoCallback RawSinkInfoPtr a
+
 foreign import ccall "wrapper" wrapRawSinkInputInfoCallback :: RawSinkInputInfoCallback a -> IO (FunPtr (RawSinkInputInfoCallback a))
+foreign import ccall "wrapper" wrapRawSinkInfoCallback :: RawSinkInfoCallback a -> IO (FunPtr (RawSinkInfoCallback a))
 
 data RawSinkInputInfo = RawSinkInputInfo
     { index'RawSinkInputInfo :: Int
@@ -54,6 +58,26 @@ instance Storable RawSinkInputInfo where
         <*> ({#get pa_sink_input_info->proplist #} p)
     poke p x = return ()
 {#pointer *sink_input_info as RawSinkInputInfoPtr -> RawSinkInputInfo #}
+
+data RawSinkInfo = RawSinkInfo
+    { name'RawSinkInfo :: Maybe String
+    , index'RawSinkInfo :: Int
+    , volume'RawSinkInfo :: RawCVolume
+    , mute'RawSinkInfo :: Int
+    , proplist'RawSinkInfo :: RawPropListPtr
+    }
+
+instance Storable RawSinkInfo where
+    sizeOf _ = {#sizeof pa_sink_info #}
+    alignment _ = {#alignof pa_sink_info #}
+    peek p = RawSinkInfo
+        <$> (peekNullableUTF8CString =<< ({#get pa_sink_info->name #} p))
+        <*> cIntConv `liftM` ({#get pa_sink_info->index #} p)
+        <*> peek ((p `plusPtr` 172) :: Ptr RawCVolume)
+        <*> cIntConv `liftM` ({#get pa_sink_info->mute #} p)
+        <*> ({#get pa_sink_info->proplist #} p)
+    poke p x = return ()
+{#pointer *sink_info as RawSinkInfoPtr -> RawSinkInfo #}
 
 {#fun context_get_sink_input_info as ^
     { id `RawContextPtr',

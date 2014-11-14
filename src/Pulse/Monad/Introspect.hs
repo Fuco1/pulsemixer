@@ -39,6 +39,9 @@ class CallbackInfo i where
 instance CallbackInfo RawSinkInputInfoPtr where
   wrapRaw = wrapRawSinkInputInfoCallback
 
+instance CallbackInfo RawSinkInfoPtr where
+  wrapRaw = wrapRawSinkInfoCallback
+
 wrapInfoCallback :: CallbackInfo i => InfoCallback i u -> IO (RawInfoCallbackPtr i u)
 wrapInfoCallback cb = wrapRaw $ \ctx info eol userdata -> do
   d <- case castPtrToMaybeStable userdata of
