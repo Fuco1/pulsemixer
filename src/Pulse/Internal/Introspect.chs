@@ -108,6 +108,19 @@ instance Storable RawSinkInfo where
       castMaybeStablePtrToPtr `UserData a'
     } -> `RawOperationPtr' id #}
 
+{#fun context_get_sink_info_by_index as ^
+    { id `RawContextPtr',
+      `Int',
+      id `FunPtr (RawSinkInfoCallback a)',
+      castMaybeStablePtrToPtr `UserData a'
+    } -> `RawOperationPtr' id #}
+
+{#fun context_get_sink_info_list as ^
+    { id `RawContextPtr',
+      id `FunPtr (RawSinkInfoCallback a)',
+      castMaybeStablePtrToPtr `UserData a'
+    } -> `RawOperationPtr' id #}
+
 -- Local Variables:
 -- mode: haskell
 -- End:

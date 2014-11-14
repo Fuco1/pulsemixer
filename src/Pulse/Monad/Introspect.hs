@@ -2,7 +2,9 @@
 
 module Pulse.Monad.Introspect
        ( SinkInputInfoCallback
+       , SinkInfoCallback
        , getSinkInputInfoList
+       , getSinkInfoList
        ) where
 
 import Foreign.C
@@ -64,6 +66,7 @@ callSynchronously zero cb action = do
   timeout 1000000 $ takeMVar mvar
   atomically $ readTVar tvar
 
+-- Actual implementations
 processSinkInput :: TVar [SinkInput] -> RawSinkInputInfoPtr -> IO ()
 processSinkInput tvar info = do
   RawSinkInputInfo { index'RawSinkInputInfo = index
@@ -80,7 +83,30 @@ processSinkInput tvar info = do
                                  (if (mute > 0) then Muted else Unmuted)
                                  pl) :)
 
+-- This is going to repeat a lot, probably.  We should try to abstract
+-- it.  See also `getSinkInfoList`.
 getSinkInputInfoList :: Pulse [SinkInput]
 getSinkInputInfoList = do
   ctx <- getContext
   liftIO $ callSynchronously [] processSinkInput (\cb -> void $ contextGetSinkInputInfoList ctx cb Nothing)
+
+processSink :: TVar [Sink] -> RawSinkInfoPtr -> IO ()
+processSink tvar info = do
+  RawSinkInfo { index'RawSinkInfo = index
+              , name'RawSinkInfo = Just name
+              , volume'RawSinkInfo = volume
+              , mute'RawSinkInfo = mute
+              , proplist'RawSinkInfo = rawPL
+              } <- peek info
+  pl <- propListFromRaw rawPL
+  atomically $ modifyTVar tvar ((Sink
+                                 index
+                                 name
+                                 volume
+                                 (if (mute > 0) then Muted else Unmuted)
+                                 pl) :)
+
+getSinkInfoList :: Pulse [Sink]
+getSinkInfoList = do
+  ctx <- getContext
+  liftIO $ callSynchronously [] processSink (\cb -> void $ contextGetSinkInfoList ctx cb Nothing)
