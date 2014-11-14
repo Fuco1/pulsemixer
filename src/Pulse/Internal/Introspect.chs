@@ -35,7 +35,7 @@ foreign import ccall "wrapper" wrapRawSinkInputInfoCallback :: RawSinkInputInfoC
 
 data RawSinkInputInfo = RawSinkInputInfo
     { index'RawSinkInputInfo :: Int
-    , sinkInputName'RawSinkInputInfo :: Maybe String
+    , name'RawSinkInputInfo :: Maybe String
     , volume'RawSinkInputInfo :: RawCVolume
     , driverName'RawSinkInputInfo :: Maybe String
     , mute'RawSinkInputInfo :: Int

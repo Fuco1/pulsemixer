@@ -64,7 +64,7 @@ callSynchronously zero cb action = do
 processSinkInput :: TVar [SinkInput] -> RawSinkInputInfoPtr -> IO ()
 processSinkInput tvar info = do
   RawSinkInputInfo { index'RawSinkInputInfo = index
-                   , sinkInputName'RawSinkInputInfo = Just name
+                   , name'RawSinkInputInfo = Just name
                    , volume'RawSinkInputInfo = volume
                    , mute'RawSinkInputInfo = mute
                    , proplist'RawSinkInputInfo = rawPL
