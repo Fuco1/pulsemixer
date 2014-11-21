@@ -22,19 +22,19 @@ source-repository head
 
 library
   exposed-modules:
-    Pulse.Monad
-  other-modules:
+    Pulse.Monad,
+    Pulse.Monad.Data,
     Pulse.Internal.Operation,
     Pulse.Internal.Def,
     Pulse.Internal.Volume,
     Pulse.Internal.MainLoopApi,
     Pulse.Internal.PropList,
     Pulse.Internal.Context,
+    Pulse.Internal.C2HS,
     Pulse.Internal.ThreadedMainLoop,
     Pulse.Internal.Introspect,
     Pulse.Monad.Connection,
     Pulse.Monad.Context,
-    Pulse.Monad.Data,
     Pulse.Monad.Introspect,
     Pulse.Monad.Monad
   build-depends:       base ==4.6.*, ncurses ==0.2.*, stm ==2.4.*, mtl ==2.1.*, bytestring ==0.10.*, utf8-string ==0.3.*, MonadCatchIO-mtl ==0.3.*, transformers ==0.3.*, containers
