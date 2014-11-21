@@ -5,6 +5,8 @@ module Pulse.Monad.Data
        , SinkInput(..)
        , Sink(..)
        , PropList(..)
+       , RawCVolume(..)
+       , Volume
        , propListFromRaw
        ) where
 
@@ -13,7 +15,7 @@ import Data.Map as M
 import Pulse.Internal.Context (RawContextPtr)
 import Pulse.Internal.PropList (RawPropListPtr, proplistGets)
 import Pulse.Internal.ThreadedMainLoop (RawThreadedMainLoopPtr)
-import Pulse.Internal.Volume (RawCVolume)
+import Pulse.Internal.Volume (RawCVolume(..), Volume)
 
 data Env = Env
            { envContext :: RawContextPtr
