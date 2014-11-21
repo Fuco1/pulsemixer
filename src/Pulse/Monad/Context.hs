@@ -31,14 +31,14 @@ import Pulse.Internal.Introspect
 
 import System.Timeout
 
-synchronizingCallback :: MVar Bool -> IO (FunPtr (RawContextSuccessCallback a))
-synchronizingCallback mvar = wrapRawContextSuccessCallback $ \_ success _ -> putMVar mvar (success > 0)
+synchronizingSuccessCallback :: MVar Bool -> IO (FunPtr (RawContextSuccessCallback a))
+synchronizingSuccessCallback mvar = wrapRawContextSuccessCallback $ \_ success _ -> putMVar mvar (success > 0)
 
 -- ^ This should call a "action" syncrhonously, and return its success status
 callSynchronously :: (FunPtr (RawContextSuccessCallback a) -> IO ()) -> IO Bool
 callSynchronously action = do
   mvar <- newEmptyMVar
-  fptr <- synchronizingCallback mvar
+  fptr <- synchronizingSuccessCallback mvar
   action fptr
   re <- timeout 1000000 $ takeMVar mvar
   return $ case re of
