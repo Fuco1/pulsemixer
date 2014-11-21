@@ -48,7 +48,9 @@ data RawContext
     , castMaybeStablePtrToPtr `UserData a'
     } -> `()' #}
 
-{#fun context_get_state as ^ { id `RawContextPtr'} -> `Int' #}
+{#enum context_state as ^ {underscoreToCase} deriving (Eq, Show)#}
+
+{#fun context_get_state as ^ { id `RawContextPtr'} -> `ContextState' cToEnum #}
 
 -- Local Variables:
 -- mode: haskell
