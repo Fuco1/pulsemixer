@@ -3,6 +3,7 @@ module Pulse.Monad.Data
        , State(..)
        , MuteState(..)
        , SinkInput(..)
+       , Sink(..)
        , PropList(..)
        , propListFromRaw
        ) where
@@ -38,6 +39,14 @@ data SinkInput = SinkInput
                  , sinkInputMute :: MuteState
                  , sinkInputProplist :: PropList
                  } deriving Show
+
+data Sink = Sink
+            { sinkIndex :: Int
+            , sinkName :: String
+            , sinkVolume :: RawCVolume
+            , sinkMute :: MuteState
+            , sinkProplist :: PropList
+            } deriving Show
 
 data State = State
              { nSinks :: Int

@@ -12,8 +12,6 @@ import Foreign.Ptr
 import Foreign.StablePtr
 import Foreign.Storable
 
-import UI.NCurses
-
 import Control.Applicative
 import Control.Concurrent.MVar
 import Control.Concurrent.STM.TVar (TVar(..), newTVarIO, writeTVar, readTVar, modifyTVar)
@@ -46,7 +44,13 @@ run = do
   cmd <- liftIO $ getLine
   case cmd of
     "quit" -> liftIO $ putStrLn "Quitting"
-    "info" -> getSinkInputInfoList >>= liftIO . putStrLn . show >> run
+    "info" -> do
+      sinkInputs <- getSinkInputInfoList
+      sinks <- getSinkInfoList
+      liftIO $ do
+        putStrLn $ show sinkInputs
+        putStrLn $ show sinks
+      run
     "m" -> do
       dat <- getData
       num <- liftIO $ atomically $ nSinks `liftM` readTVar dat
